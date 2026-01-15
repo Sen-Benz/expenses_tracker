@@ -1,7 +1,12 @@
 """Data visualization module."""
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+    
 from datetime import datetime
 from collections import defaultdict
 
@@ -12,9 +17,15 @@ class Visualizer:
     def __init__(self, expense_manager):
         """Initialize visualizer."""
         self.em = expense_manager
+        if not HAS_MATPLOTLIB:
+            print("⚠️  matplotlib not installed. Chart generation disabled.")
 
     def plot_expense_by_category(self, save_path=None):
         """Create pie chart of expenses by category."""
+        if not HAS_MATPLOTLIB:
+            print("❌ matplotlib required for chart generation. Run: pip install matplotlib")
+            return
+            
         summary = self.em.get_expenses_by_category_summary()
 
         if not summary:

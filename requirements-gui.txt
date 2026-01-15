@@ -1,0 +1,2 @@
+tkinter  # Usually comes with Python, but listed for completeness
+colorama==0.4.6

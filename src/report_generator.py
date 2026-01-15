@@ -2,7 +2,22 @@
 
 import csv
 from datetime import datetime
-from tabulate import tabulate
+
+try:
+    from tabulate import tabulate
+except ImportError:
+    # Fallback if tabulate not installed (for GUI-only usage)
+    def tabulate(data, headers=None, tablefmt=None):
+        """Simple table formatter fallback."""
+        if not data:
+            return ""
+        lines = []
+        if headers:
+            lines.append(" | ".join(headers))
+            lines.append("-" * (sum(len(h) for h in headers) + len(headers) * 2))
+        for row in data:
+            lines.append(" | ".join(str(c) for c in row))
+        return "\n".join(lines)
 
 
 class ReportGenerator:

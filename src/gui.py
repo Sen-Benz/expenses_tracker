@@ -14,9 +14,6 @@ from src.advanced_features import (
     TransactionSearch,
     BudgetAlert,
 )
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
 
 
 class ExpenseTrackerGUI:
@@ -153,9 +150,9 @@ class ExpenseTrackerGUI:
 
         # Summary items
         summary_data = [
-            ("Total Income", f"${income:,.2f}", "#2ecc71"),
-            ("Total Expenses", f"${expenses:,.2f}", "#e74c3c"),
-            ("Balance", f"${balance:,.2f}", "#3498db"),
+            ("Total Income", f"₱{income:,.2f}", "#2ecc71"),
+            ("Total Expenses", f"₱{expenses:,.2f}", "#e74c3c"),
+            ("Balance", f"₱{balance:,.2f}", "#3498db"),
         ]
 
         for label, value, color in summary_data:
@@ -167,6 +164,14 @@ class ExpenseTrackerGUI:
                 item_frame, text=value, font=("Arial", 13, "bold"), foreground=color
             )
             value_label.pack(side=tk.RIGHT)
+            
+            # Add edit button for income
+            if "Income" in label and "Total" in label:
+                edit_btn = ttk.Button(
+                    item_frame, text="✏️ Edit", width=8,
+                    command=self.edit_income
+                )
+                edit_btn.pack(side=tk.RIGHT, padx=5)
 
     def create_add_expense_tab(self):
         """Create tab for adding expenses and income."""
@@ -190,7 +195,7 @@ class ExpenseTrackerGUI:
         ).pack(side=tk.LEFT, padx=5)
 
         # Amount
-        ttk.Label(form_frame, text="Amount ($):", font=("Arial", 10)).grid(
+        ttk.Label(form_frame, text="Amount (₱):", font=("Arial", 10)).grid(
             row=1, column=0, sticky=tk.W, pady=5
         )
         self.amount_entry = ttk.Entry(form_frame, width=30)
@@ -397,7 +402,7 @@ class ExpenseTrackerGUI:
                     t.date,
                     t.transaction_type.upper(),
                     t.category,
-                    f"${t.amount:.2f}",
+                    f"₱{t.amount:.2f}",
                     t.description[:30],
                 ),
             )
@@ -502,7 +507,7 @@ class ExpenseTrackerGUI:
         budget_combo.pack(side=tk.LEFT, padx=5)
         budget_combo.current(0)
 
-        ttk.Label(set_budget_frame, text="Budget ($):").pack(side=tk.LEFT, padx=5)
+        ttk.Label(set_budget_frame, text="Budget (₱):").pack(side=tk.LEFT, padx=5)
         self.budget_amount_entry = ttk.Entry(set_budget_frame, width=15)
         self.budget_amount_entry.pack(side=tk.LEFT, padx=5)
 
@@ -566,9 +571,9 @@ class ExpenseTrackerGUI:
                 tk.END,
                 values=(
                     category,
-                    f"${status['budget']:.2f}",
-                    f"${status['spent']:.2f}",
-                    f"${status['remaining']:.2f}",
+                    f"₱{status['budget']:.2f}",
+                    f"₱{status['spent']:.2f}",
+                    f"₱{status['remaining']:.2f}",
                     f"{status['percentage']:.1f}%",
                 ),
             )
@@ -592,8 +597,8 @@ class ExpenseTrackerGUI:
         analytics_data = [
             ("Savings Rate", f"{savings_rate}%"),
             ("Top Expense Category", f"{trends.get('top_category', 'N/A')}"),
-            ("Top Category Amount", f"${trends.get('top_category_amount', 0):.2f}"),
-            ("Average Monthly Expense", f"${trends.get('average_monthly_expense', 0):.2f}"),
+            ("Top Category Amount", f"₱{trends.get('top_category_amount', 0):.2f}"),
+            ("Average Monthly Expense", f"₱{trends.get('average_monthly_expense', 0):.2f}"),
         ]
 
         for label, value in analytics_data:
@@ -622,7 +627,7 @@ class ExpenseTrackerGUI:
                 forecast_tree.insert(
                     "",
                     tk.END,
-                    values=(item["month"], f"${item['forecasted_expense']:.2f}"),
+                    values=(item["month"], f"₱{item['forecasted_expense']:.2f}"),
                 )
 
             forecast_tree.pack(fill=tk.BOTH, expand=True)
@@ -666,7 +671,7 @@ class ExpenseTrackerGUI:
         ).grid(row=0, column=2, padx=5)
 
         # Search by amount range
-        ttk.Label(search_frame, text="Amount Range ($):").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(search_frame, text="Amount Range (₱):").grid(row=1, column=0, sticky=tk.W, pady=5)
         range_frame = ttk.Frame(search_frame)
         range_frame.grid(row=1, column=1, sticky=tk.EW, pady=5)
 
@@ -772,12 +777,52 @@ class ExpenseTrackerGUI:
                     t.date,
                     t.transaction_type.upper(),
                     t.category,
-                    f"${t.amount:.2f}",
+                    f"₱{t.amount:.2f}",
                     t.description[:30],
                 ),
             )
 
         messagebox.showinfo("Results", f"Found {len(results)} transaction(s)")
+
+    def edit_income(self):
+        """Open dialog to add quick income."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Add Income")
+        dialog.geometry("300x200")
+        dialog.resizable(False, False)
+
+        # Amount
+        ttk.Label(dialog, text="Income Amount (₱):", font=("Arial", 11)).pack(pady=10)
+        amount_entry = ttk.Entry(dialog, width=25, font=("Arial", 12))
+        amount_entry.pack(pady=5)
+        amount_entry.focus()
+
+        # Description
+        ttk.Label(dialog, text="Description:", font=("Arial", 11)).pack(pady=(10, 5))
+        desc_entry = ttk.Entry(dialog, width=25)
+        desc_entry.pack(pady=5)
+        desc_entry.insert(0, "Additional Income")
+
+        # Button frame
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(pady=20)
+
+        def add_quick_income():
+            try:
+                amount = float(amount_entry.get())
+                description = desc_entry.get()
+                if amount <= 0:
+                    messagebox.showerror("Error", "Amount must be greater than 0")
+                    return
+                self.em.add_income(amount, description)
+                messagebox.showinfo("Success", f"✓ Added ₱{amount:,.2f} income")
+                self.refresh_dashboard()
+                dialog.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid amount")
+
+        ttk.Button(button_frame, text="✅ Add Income", command=add_quick_income).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy).pack(side=tk.LEFT, padx=5)
 
     def on_closing(self):
         """Handle window closing."""
